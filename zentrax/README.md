@@ -40,11 +40,10 @@ On Termux, use the same commands. Keep the server process running while you use 
 2. Put it in `zentrax/.env` as `TMDB_API_KEY=your_key`.
 3. Restart the server.
 
-The server reads environment variables supplied by the host. For local `.env` loading without an environment manager, export the value before starting:
+The server loads `zentrax/.env` automatically through dotenv. On a hosting platform, set `TMDB_API_KEY` in the service's environment variables instead.
 
 ```bash
-export TMDB_API_KEY="your_key"
-npm start
+TMDB_API_KEY="your_key" npm start
 ```
 
 TMDB attribution and branding requirements apply when using its API. See https://www.themoviedb.org/documentation/api/terms-of-use.
