@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080b12">
+  <meta name="description" content="ZENTRAX Legendary Pro — media discovery and automation by PRODEV OFC.">
+  <title>ZENTRAX — LEGENDARY PRO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="ZENTRAX home">
+      <span class="brand-mark">Z<span>X</span></span>
+      <span class="brand-copy"><strong>ZENTRAX</strong><small>LEGENDARY <b>PRO</b></small></span>
+    </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="nav-link active" data-view="discover">Discover</button>
+      <button class="nav-link" data-view="watchlist">My Library <span id="savedCount" class="nav-count">0</span></button>
+    </nav>
+    <div class="top-actions">
+      <span class="system-status"><i></i><span id="systemStatus">SYSTEM ONLINE</span></span>
+      <button class="icon-button" id="refreshBtn" title="Refresh catalogue" aria-label="Refresh catalogue">↻</button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="eyebrow-line"></span> THE NEXT MEDIA FRONTIER</div>
+        <h1>Entertainment.<br><span>Without limits.</span></h1>
+        <p>Discover your next obsession. Build your library. Control your media universe from one command center.</p>
+        <div class="hero-actions">
+          <button class="primary-button" id="exploreBtn">Explore library <span>↗</span></button>
+          <span class="hero-note"><b>01</b> / DISCOVER SOMETHING NEW</span>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
+        <div class="core"><span>Z</span><small>NX / 01</small></div>
+        <div class="art-label label-top">MEDIA INTELLIGENCE</div>
+        <div class="art-label label-bottom">PRODEV OFC · EST. 2026</div>
+      </div>
+      <div class="hero-index">ZENTRAX <span>—</span> 001</div>
+    </section>
+
+    <section class="metrics" aria-label="Platform status">
+      <div class="metric"><span class="metric-label">CATALOGUE</span><strong id="catalogMetric">—</strong><small>titles indexed</small></div>
+      <div class="metric"><span class="metric-label">MY LIBRARY</span><strong id="libraryMetric">0</strong><small>saved titles</small></div>
+      <div class="metric"><span class="metric-label">PLATFORM</span><strong class="metric-live">ONLINE</strong><small id="providerLabel">demo catalogue</small></div>
+      <div class="metric metric-brand"><span class="metric-label">BUILT BY</span><strong>PRODEV OFC</strong><small>legendary engineering</small></div>
+    </section>
+
+    <section class="catalog-section" id="catalogSection">
+      <div class="section-heading">
+        <div><div class="eyebrow">YOUR UNIVERSE STARTS HERE</div><h2 id="sectionTitle">Featured discoveries<span>.</span></h2></div>
+        <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search titles, genres..." autocomplete="off"><kbd>/</kbd></label>
+      </div>
+      <div class="toolbar">
+        <div class="filters" role="group" aria-label="Filter catalogue">
+          <button class="filter-chip selected" data-filter="all">All titles</button>
+          <button class="filter-chip" data-filter="movie">Movies</button>
+          <button class="filter-chip" data-filter="series">Series</button>
+          <button class="filter-chip" data-filter="anime">Anime</button>
+        </div>
+        <span id="resultCount" class="result-count">Loading catalogue...</span>
+      </div>
+      <div id="catalogGrid" class="catalog-grid" aria-live="polite"></div>
+      <div id="emptyState" class="empty-state hidden"><span>◇</span><h3>Nothing in this sector.</h3><p>Try another search or change the filter.</p></div>
+    </section>
+
+    <section class="platform-note">
+      <div class="note-icon">✳</div>
+      <div><strong>Built to grow. Engineered to scale.</strong><p>ZENTRAX is being developed in milestones. Live metadata is available when a TMDB API key is configured. Streaming, provider integrations and real download workers are separate upcoming modules.</p></div>
+      <span class="note-tag">FOUNDATION 01</span>
+    </section>
+    <footer><span>© 2026 ZENTRAX · LEGENDARY PRO</span><span>DESIGNED & ENGINEERED BY <b>PRODEV OFC</b></span><span>ONE UNIVERSE. INFINITE ENTERTAINMENT.</span></footer>
+  </main>
+
+  <dialog id="detailDialog" class="detail-dialog">
+    <button class="dialog-close" id="closeDialog" aria-label="Close">×</button>
+    <div id="detailContent"></div>
+  </dialog>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
