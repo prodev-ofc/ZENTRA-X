@@ -1,0 +1,20 @@
+{
+  "name": "zentrax-legendary-pro",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ZENTRAX Legendary Pro media discovery and automation platform by PRODEV OFC",
+  "author": "PRODEV OFC",
+  "license": "MIT",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "check": "node --check server.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
