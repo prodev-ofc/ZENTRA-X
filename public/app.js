@@ -1,6 +1,6 @@
 'use strict';
 
-const state = { items: [], watchlist: [], filter: 'all', query: '', view: 'discover', provider: 'demo' };
+const state = { items: [], watchlist: [], filter: 'all', query: '', view: 'discover', provider: 'demo', searchTimer: null, requestId: 0 };
 const $ = (selector) => document.querySelector(selector);
 
 function escapeHtml(value = '') {
@@ -28,10 +28,6 @@ function notify(message) {
 function visibleItems() {
   let items = state.view === 'watchlist' ? state.watchlist : state.items;
   if (state.filter !== 'all') items = items.filter(item => item.type === state.filter);
-  if (state.query) {
-    const query = state.query.toLowerCase();
-    items = items.filter(item => [item.title, item.genre, item.overview].some(value => String(value || '').toLowerCase().includes(query)));
-  }
   return items;
 }
 
@@ -63,16 +59,21 @@ function render() {
   $('#sectionTitle').innerHTML = state.view === 'watchlist' ? 'Your library<span>.</span>' : 'Featured discoveries<span>.</span>';
 }
 
-async function loadCatalog() {
+async function loadCatalog(query = '') {
+  const requestId = ++state.requestId;
   $('#systemStatus').textContent = 'SYNCING';
   try {
-    const result = await api('/api/catalog');
+    const params = new URLSearchParams();
+    if (query.trim()) params.set('q', query.trim());
+    const result = await api('/api/catalog' + (params.size ? '?' + params.toString() : ''));
+    if (requestId !== state.requestId) return;
     state.items = result.items || [];
     state.provider = result.provider || 'demo';
     $('#providerLabel').textContent = state.provider === 'tmdb' ? 'live TMDB metadata' : 'sample catalogue';
     $('#systemStatus').textContent = 'SYSTEM ONLINE';
     render();
   } catch (error) {
+    if (requestId !== state.requestId) return;
     $('#systemStatus').textContent = 'API OFFLINE';
     notify(error.message);
   }
@@ -157,7 +158,12 @@ document.addEventListener('keydown', event => {
 
 $('#searchInput').addEventListener('input', event => {
   state.query = event.target.value.trim();
-  render();
+  clearTimeout(state.searchTimer);
+  if (!state.query) {
+    loadCatalog();
+    return;
+  }
+  state.searchTimer = setTimeout(() => loadCatalog(state.query), 350);
 });
 $('#closeDialog').addEventListener('click', () => $('#detailDialog').close());
 $('#refreshBtn').addEventListener('click', loadCatalog);
