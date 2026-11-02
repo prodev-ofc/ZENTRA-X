@@ -1,7 +1,5 @@
 node_modules
-session
-media
-npm-debug.log
 .git
-.gitignore
 .env
+*.log
+.DS_Store

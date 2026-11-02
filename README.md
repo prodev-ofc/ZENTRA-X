@@ -1,55 +1,82 @@
-# AWESOME-MD
-WhatsApp Assistance 
-<div align="center"> 
-  <a href="https://git.io/typing-svg"> 
-    <img src="https://readme-typing-svg.demolab.com?font=Matrix&size=50&pause=1000&color=33ff00&center=true&width=910&height=100&lines=AWESOME-MD;Multi+Device+Whatsapp+Bot;Coded+By+BLAQ-BOY" alt="Typing SVG" />
-  </a> 
-</div>
+# ZENTRAX — LEGENDARY PRO
 
-<div align="center">
-  <a href="https://github.com/Blaq-boy101/AWESOME-MD/fork">
-    <img src="https://files.catbox.moe/c3lmid.jpg">
-    <img src="https://img.shields.io/badge/Fork-Repository-navyblue?style=for-the-badge" alt="Fork the repository"/>
-  </a>
-</div>
+**One Universe. Infinite Entertainment.**  
+Built by **PRODEV OFC**.
 
+ZENTRAX is a media discovery and personal-library platform. This repository is now dedicated to ZENTRAX; the previous starter/bot application files have been replaced.
 
+## Current foundation
 
-<div align="center">
-  <!-- DASHBOARD BUTTON -->
-  <a href="https://awesome-md-ax2u.onrender.com" target="_blank">
-    <img src="https://img.shields.io/badge/🌐_OPEN_DASHBOARD-25D366?style=for-the-badge&logo=render&logoColor=white" alt="Open Dashboard"/>
-  </a>
+- Premium responsive discovery dashboard.
+- Express 5 API and health endpoint.
+- Catalogue search and media-type filters.
+- Persistent server-side watchlist stored in a JSON file.
+- Optional live movie and TV metadata through The Movie Database (TMDB).
+- Honest demo mode when no metadata API key is configured.
+- Docker and GitHub Actions setup.
 
+## Requirements
 
+- Node.js 20 or newer.
+- npm.
 
-## 🚀 QUICK START
-1. Click `OPEN DASHBOARD` button above
-2. Enter your number `26378XXXXXXX`
-3. Click `Get QR Code` or `Get Pair Code`
-4. Connect to WhatsApp
+## Run locally
 
+```bash
+npm install
+cp .env.example .env
+npm start
+```
 
+Open http://localhost:4173.
 
-## OTHER MEDIA
+On Termux, run the same commands from the cloned repository directory. Keep the server process running while using the dashboard.
 
+## Optional live catalogue
 
-| BLAQ-BOY TECH | MULTI-DEVICE | WHATSAPP-BOT|
-|---------------|--------------|-------------|
-| ABM-XMD | WHATSAPP-BOT| BY BLAQ-BOY |
-| AWESOME-MD | WHATSAPP-BOT|BY BLAQ-BOY |
-| BLAQ-PANTHER MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| BLAQFIRE-MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| CHRISS-MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| COLDPATH-MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| DRAGONS MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| GIFT MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| HEXHUB MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| HONOR-XMD | WHATSAPP-BOT | BY BLAQ-BOY |
-| KEITH MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| KING-KONG MD | WHATSAPP-BOT | BY BLAQ-BOY |
-|SASHA MD | WHATSAPP-BOT | BY BLAQ-BOY |
-| SKYLINE-REPO | WHATSAPP-BOT | BY BLAQ-BOY |
-||||
-| ᴛʜᴀɴᴋ ʏᴏᴜ ғᴏʀ sᴜᴘᴘᴏʀᴛɪɴɢ ʙʟᴀǫ ʙᴏʏ ᴛᴇᴄʜ |
-| ᴀᴜᴘᴘᴏʀᴛ | ᴜs | ᴏɴ ɢᴍᴀɪʟ | blaqskyper@gmail.com |
+1. Create an API key through your TMDB account.
+2. Add it to `.env` as `TMDB_API_KEY=your_key`.
+3. Restart ZENTRAX.
+
+TMDB attribution and branding requirements apply when using its API. See https://www.themoviedb.org/documentation/api/terms-of-use.
+
+## API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| GET | `/api/health` | Service status and provider mode |
+| GET | `/api/config` | Public feature flags |
+| GET | `/api/catalog` | Catalogue; supports `?q=search` |
+| GET | `/api/watchlist` | Read saved titles |
+| PUT | `/api/watchlist/:id` | Toggle a title in the saved library |
+| DELETE | `/api/watchlist` | Clear the saved library |
+
+## Project structure
+
+```text
+ZENTRA-X/
+├── .github/workflows/node.js.yml
+├── public/
+│   ├── app.js
+│   ├── index.html
+│   └── styles.css
+├── .env.example
+├── Dockerfile
+├── package.json
+├── server.js
+└── README.md
+```
+
+## Roadmap
+
+1. Foundation and discovery UI — current.
+2. Real media-provider integrations and title/episode detail adapters.
+3. Authorized streaming sources and playback.
+4. Real download worker with queue persistence, safe destination handling and progress events.
+5. RSS automation with validated feeds and scheduled jobs.
+6. Authentication, user roles and admin observability.
+7. Deployment profiles, tests, backups and production hardening.
+
+**Important:** Streaming, provider integrations, downloads and RSS automation are not implemented in this foundation milestone. The interface does not pretend demo data or simulated progress is real media activity. Connect only media sources you own or are authorized to access.
+
+© 2026 PRODEV OFC
