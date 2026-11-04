@@ -12,10 +12,15 @@ const ROOT = __dirname;
 const PUBLIC_DIR = path.join(ROOT, 'public');
 const DATA_DIR = path.join(ROOT, 'data');
 const WATCHLIST_FILE = path.join(DATA_DIR, 'watchlist.json');
+const MEDIA_DIR = path.resolve(ROOT, process.env.MEDIA_DIR || 'media');
+const MEDIA_EXTENSIONS = new Set(['.mp4', '.m4v', '.webm', '.ogv', '.ogg']);
 
 app.disable('x-powered-by');
 app.use(express.json({ limit: '32kb' }));
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
+
+// Express static supports byte ranges, allowing seekable browser playback.
+app.use('/media', express.static(MEDIA_DIR, { acceptRanges: true, dotfiles: 'deny', fallthrough: false, index: false, maxAge: 0 }));
 
 const demoCatalog = [
   {
@@ -98,6 +103,20 @@ const demoCatalog = [
   }
 ];
 
+async function listLocalMedia() {
+  await fs.mkdir(MEDIA_DIR, { recursive: true });
+  const entries = await fs.readdir(MEDIA_DIR, { withFileTypes: true });
+  const media = [];
+  for (const entry of entries) {
+    if (!entry.isFile() || entry.name.startsWith('.')) continue;
+    const extension = path.extname(entry.name).toLowerCase();
+    if (!MEDIA_EXTENSIONS.has(extension)) continue;
+    const stat = await fs.stat(path.join(MEDIA_DIR, entry.name));
+    media.push({ id: entry.name, title: path.basename(entry.name, extension).replace(/[._-]+/g, ' '), type: 'local', extension: extension.slice(1), size: stat.size, url: '/media/' + encodeURIComponent(entry.name) });
+  }
+  return media.sort((a, b) => a.title.localeCompare(b.title));
+}
+
 async function readWatchlist() {
   try {
     return JSON.parse(await fs.readFile(WATCHLIST_FILE, 'utf8'));
@@ -179,6 +198,16 @@ app.get('/api/catalog', async (req, res) => {
   }
 });
 
+app.get('/api/media', async (req, res) => {
+  try {
+    const items = await listLocalMedia();
+    res.json({ items, count: items.length, source: 'local-media-directory' });
+  } catch (error) {
+    console.error('[media]', error.message);
+    res.status(500).json({ error: 'Could not read the local media library.' });
+  }
+});
+
 app.get('/api/watchlist', async (req, res) => {
   try {
     res.json({ items: await readWatchlist() });
@@ -224,7 +253,7 @@ app.get('/api/config', (req, res) => {
     features: {
       liveCatalog: Boolean(process.env.TMDB_API_KEY),
       watchlistPersistence: true,
-      mediaStreaming: false,
+      mediaStreaming: true,
       downloads: false,
       rssAutomation: false
     }

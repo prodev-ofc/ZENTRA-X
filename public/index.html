@@ -26,6 +26,7 @@
     <nav class="main-nav" aria-label="Main navigation">
       <button class="nav-link active" data-view="discover">Discover</button>
       <button class="nav-link" data-view="watchlist">My Library <span id="savedCount" class="nav-count">0</span></button>
+      <button class="nav-link" data-view="local">Local Media</button>
     </nav>
     <div class="top-actions">
       <span class="system-status"><i></i><span id="systemStatus">SYSTEM ONLINE</span></span>
@@ -66,7 +67,7 @@
         <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search titles, genres..." autocomplete="off"><kbd>/</kbd></label>
       </div>
       <div class="toolbar">
-        <div class="filters" role="group" aria-label="Filter catalogue">
+        <div class="filters" id="filters" role="group" aria-label="Filter catalogue">
           <button class="filter-chip selected" data-filter="all">All titles</button>
           <button class="filter-chip" data-filter="movie">Movies</button>
           <button class="filter-chip" data-filter="series">Series</button>
@@ -80,7 +81,7 @@
 
     <section class="platform-note">
       <div class="note-icon">✳</div>
-      <div><strong>Built to grow. Engineered to scale.</strong><p>ZENTRAX is being developed in milestones. Live metadata is available when a TMDB API key is configured. Streaming, provider integrations and real download workers are separate upcoming modules.</p></div>
+      <div><strong>Built to grow. Engineered to scale.</strong><p>ZENTRAX is being developed in milestones. Live metadata is available when a TMDB API key is configured. Local playback is available for authorized files placed in the configured media directory. Remote provider integrations and download workers remain future modules.</p></div>
       <span class="note-tag">FOUNDATION 01</span>
     </section>
     <footer><span>© 2026 ZENTRAX · LEGENDARY PRO</span><span>DESIGNED & ENGINEERED BY <b>PRODEV OFC</b></span><span>ONE UNIVERSE. INFINITE ENTERTAINMENT.</span></footer>
