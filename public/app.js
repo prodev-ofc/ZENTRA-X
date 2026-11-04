@@ -51,7 +51,7 @@ function render() {
     return `
       <article class="media-card" data-open="${escapeHtml(item.id)}" tabindex="0" role="button" aria-label="View ${escapeHtml(item.title)}">
         <div class="poster-wrap">
-          ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.style.display='none'>` : '<div class="local-poster"><span>▶</span><small>LOCAL MEDIA</small></div>'}
+          ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.style.display='none'">` : '<div class="local-poster"><span>▶</span><small>LOCAL MEDIA</small></div>'}
           <span class="type-pill">${isLocal ? escapeHtml(item.extension.toUpperCase()) : escapeHtml(item.type)}</span>
           <span class="rating">${isLocal ? 'ON DEVICE' : '★ ' + escapeHtml(item.rating || '—')}</span>
         </div>
