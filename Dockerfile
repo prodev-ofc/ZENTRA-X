@@ -6,5 +6,8 @@ COPY server.js ./
 COPY public ./public
 ENV NODE_ENV=production
 ENV PORT=4173
+ENV MEDIA_DIR=/app/media
+RUN mkdir -p /app/media
+VOLUME ["/app/media"]
 EXPOSE 4173
 CMD ["npm", "start"]
