@@ -1,6 +1,6 @@
 'use strict';
 
-const state = { items: [], watchlist: [], filter: 'all', query: '', view: 'discover', provider: 'demo', searchTimer: null, requestId: 0 };
+const state = { items: [], watchlist: [], localMedia: [], filter: 'all', query: '', view: 'discover', provider: 'demo', searchTimer: null, requestId: 0 };
 const $ = (selector) => document.querySelector(selector);
 
 function escapeHtml(value = '') {
@@ -26,37 +26,59 @@ function notify(message) {
 }
 
 function visibleItems() {
-  let items = state.view === 'watchlist' ? state.watchlist : state.items;
-  if (state.filter !== 'all') items = items.filter(item => item.type === state.filter);
+  let items = state.view === 'watchlist' ? state.watchlist : state.view === 'local' ? state.localMedia : state.items;
+  if (state.view === 'local' && state.query) {
+    const query = state.query.toLowerCase();
+    items = items.filter(item => item.title.toLowerCase().includes(query));
+  } else if (state.view !== 'local' && state.filter !== 'all') {
+    items = items.filter(item => item.type === state.filter);
+  }
   return items;
+}
+
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 0) return 'SIZE N/A';
+  if (bytes < 1024 * 1024) return Math.round(bytes / 1024) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
 function render() {
   const items = visibleItems();
   $('#catalogGrid').innerHTML = items.map(item => {
-    const saved = state.watchlist.some(entry => String(entry.id) === String(item.id));
+    const isLocal = item.type === 'local';
+    const saved = !isLocal && state.watchlist.some(entry => String(entry.id) === String(item.id));
     const image = item.poster || item.backdrop || '';
     return `
       <article class="media-card" data-open="${escapeHtml(item.id)}" tabindex="0" role="button" aria-label="View ${escapeHtml(item.title)}">
         <div class="poster-wrap">
-          ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
-          <span class="type-pill">${escapeHtml(item.type)}</span>
-          <span class="rating">★ ${escapeHtml(item.rating || '—')}</span>
+          ${image ? `<img src="${escapeHtml(image)}" alt="" loading="lazy" onerror="this.style.display='none'>` : '<div class="local-poster"><span>▶</span><small>LOCAL MEDIA</small></div>'}
+          <span class="type-pill">${isLocal ? escapeHtml(item.extension.toUpperCase()) : escapeHtml(item.type)}</span>
+          <span class="rating">${isLocal ? 'ON DEVICE' : '★ ' + escapeHtml(item.rating || '—')}</span>
         </div>
         <div class="card-info">
-          <div class="card-genre">${escapeHtml(item.genre || 'Unclassified')}</div>
+          <div class="card-genre">${isLocal ? 'YOUR MEDIA LIBRARY' : escapeHtml(item.genre || 'Unclassified')}</div>
           <div class="card-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
-          <div class="card-meta"><span>${escapeHtml(item.year || 'YEAR N/A')}</span><button class="save-button ${saved ? 'saved' : ''}" data-save="${escapeHtml(item.id)}" aria-label="${saved ? 'Remove from' : 'Add to'} library" title="Save to library">${saved ? '◆' : '◇'}</button></div>
+          <div class="card-meta"><span>${isLocal ? formatBytes(item.size) : escapeHtml(item.year || 'YEAR N/A')}</span>${isLocal ? '<span class="play-label">PLAY ▶</span>' : `<button class="save-button ${saved ? 'saved' : ''}" data-save="${escapeHtml(item.id)}" aria-label="Save to library">${saved ? '◆' : '◇'}</button>`}</div>
         </div>
       </article>`;
   }).join('');
-
   $('#emptyState').classList.toggle('hidden', items.length !== 0);
   $('#resultCount').textContent = items.length + (items.length === 1 ? ' TITLE' : ' TITLES');
   $('#catalogMetric').textContent = state.items.length;
   $('#libraryMetric').textContent = state.watchlist.length;
   $('#savedCount').textContent = state.watchlist.length;
-  $('#sectionTitle').innerHTML = state.view === 'watchlist' ? 'Your library<span>.</span>' : 'Featured discoveries<span>.</span>';
+  $('#sectionTitle').innerHTML = state.view === 'watchlist' ? 'Your library<span>.</span>' : state.view === 'local' ? 'Local media<span>.</span>' : 'Featured discoveries<span>.</span>';
+  $('#filters').classList.toggle('hidden', state.view === 'local');
+}
+
+async function loadLocalMedia() {
+  try {
+    const result = await api('/api/media');
+    state.localMedia = result.items || [];
+    render();
+  } catch (error) {
+    notify(error.message);
+  }
 }
 
 async function loadCatalog(query = '') {
@@ -106,9 +128,20 @@ async function toggleSave(id) {
 }
 
 function openDetails(id) {
-  const item = [...state.items, ...state.watchlist].find(entry => String(entry.id) === String(id));
+  const item = state.view === 'local'
+    ? state.localMedia.find(entry => String(entry.id) === String(id))
+    : [...state.items, ...state.watchlist].find(entry => String(entry.id) === String(id));
   if (!item) return;
   const dialog = $('#detailDialog');
+  if (item.type === 'local') {
+    $('#detailContent').innerHTML = `
+      <div class="player-heading"><div class="detail-meta">ZENTRAX LOCAL PLAYER · ${escapeHtml(item.extension.toUpperCase())}</div><h2>${escapeHtml(item.title)}</h2></div>
+      <div class="player-wrap"><video id="zentraxPlayer" controls playsinline preload="metadata"><source src="${escapeHtml(item.url)}">Your browser does not support HTML5 video.</video></div>
+      <div class="detail-body"><p>Playing from your configured local media library. Seeking uses HTTP byte-range requests.</p><small>${formatBytes(item.size)}</small></div>`;
+    dialog.showModal();
+    $('#zentraxPlayer').play().catch(() => {});
+    return;
+  }
   const background = item.backdrop || item.poster;
   $('#detailContent').innerHTML = `
     <div class="detail-hero" style="background-image:linear-gradient(0deg,#101722,transparent 85%),url('${escapeHtml(background || '')}')">
@@ -134,6 +167,7 @@ document.addEventListener('click', event => {
   const nav = event.target.closest('[data-view]');
   if (nav) {
     state.view = nav.dataset.view;
+    if (state.view === 'local') loadLocalMedia();
     document.querySelectorAll('.nav-link').forEach(button => button.classList.toggle('active', button === nav));
     render();
   }
@@ -158,6 +192,7 @@ document.addEventListener('keydown', event => {
 
 $('#searchInput').addEventListener('input', event => {
   state.query = event.target.value.trim();
+  if (state.view === 'local') { render(); return; }
   clearTimeout(state.searchTimer);
   if (!state.query) {
     loadCatalog();
@@ -169,4 +204,4 @@ $('#closeDialog').addEventListener('click', () => $('#detailDialog').close());
 $('#refreshBtn').addEventListener('click', loadCatalog);
 $('#exploreBtn').addEventListener('click', () => $('#catalogSection').scrollIntoView({ behavior: 'smooth' }));
 
-Promise.all([loadCatalog(), loadWatchlist()]);
+Promise.all([loadCatalog(), loadWatchlist(), loadLocalMedia()]);
