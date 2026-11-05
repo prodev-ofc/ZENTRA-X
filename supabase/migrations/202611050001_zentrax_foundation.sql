@@ -1,16 +1,18 @@
 -- ZENTRAX Supabase foundation
--- Apply in Supabase SQL Editor. Owner emails are intentionally NOT embedded here;
--- add them to private.owner_allowlist using the separate setup step in docs/SUPABASE_SETUP.md.
+-- Apply this migration once in the selected Supabase project.
+-- Initial owners are allowlisted separately in docs/SUPABASE_SETUP.md.
 
 create extension if not exists pgcrypto;
 
 create type public.app_role as enum ('user', 'admin', 'owner');
 create type public.post_status as enum ('pending', 'approved', 'rejected', 'removed');
 create type public.media_kind as enum ('video', 'live', 'external');
+create type public.post_event_type as enum ('view', 'download', 'share');
+create type public.platform_event_type as enum ('login', 'logout');
 
 create schema if not exists private;
 
-create table if not exists private.owner_allowlist (
+create table private.owner_allowlist (
   email text primary key check (email = lower(email)),
   created_at timestamptz not null default now()
 );
@@ -49,8 +51,6 @@ create table public.post_likes (
   primary key (post_id, user_id)
 );
 
-create type public.post_event_type as enum ('view', 'download', 'share');
-
 create table public.post_events (
   id bigint generated always as identity primary key,
   post_id uuid not null references public.posts(id) on delete cascade,
@@ -58,8 +58,6 @@ create table public.post_events (
   event_type public.post_event_type not null,
   created_at timestamptz not null default now()
 );
-
-create type public.platform_event_type as enum ('login', 'logout');
 
 create table public.platform_events (
   id bigint generated always as identity primary key,
@@ -86,7 +84,7 @@ as $$
     where p.id = (select auth.uid()) and p.role = any(required_roles)
   );
 $$;
-
+revoke all on function private.has_role(public.app_role[]) from public, anon;
 grant usage on schema private to authenticated;
 grant execute on function private.has_role(public.app_role[]) to authenticated;
 
@@ -130,14 +128,12 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
--- Email confirmation happens after signup when confirmation is enabled.
--- Promote allowlisted owners at confirmation time, never from editable user metadata.
 create or replace function public.promote_allowlisted_owner()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 begin
   if new.email_confirmed_at is not null and exists (
     select 1 from private.owner_allowlist a where a.email = lower(coalesce(new.email, ''))
@@ -146,7 +142,7 @@ begin
   end if;
   return new;
 end;
-$;
+$$;
 
 drop trigger if exists on_auth_user_confirmed_owner on auth.users;
 create trigger on_auth_user_confirmed_owner
@@ -175,17 +171,33 @@ alter table public.post_likes enable row level security;
 alter table public.post_events enable row level security;
 alter table public.platform_events enable row level security;
 
+-- Explicit grants: clients may only update safe profile/content columns.
+grant select on public.profiles to authenticated;
+grant insert (id, username, display_name) on public.profiles to authenticated;
+grant update (username, display_name) on public.profiles to authenticated;
+revoke update (role, id, created_at, updated_at) on public.profiles from anon, authenticated;
+
+grant select on public.posts to authenticated;
+grant insert (user_id, title, description, category, media_kind, media_url, thumbnail_url, rights_confirmed) on public.posts to authenticated;
+grant update (title, description, category, media_kind, media_url, thumbnail_url, rights_confirmed) on public.posts to authenticated;
+grant update on public.posts to authenticated;
+
+grant select, insert, delete on public.post_likes to authenticated;
+grant select, insert on public.post_events to authenticated;
+grant select, insert on public.platform_events to authenticated;
+
 create policy "profiles_read_self_or_staff" on public.profiles
 for select to authenticated
 using (id = (select auth.uid()) or (select private.has_role(array['admin','owner']::public.app_role[])));
 
-create policy "profiles_update_self_basic" on public.profiles
+create policy "profiles_insert_self_user" on public.profiles
+for insert to authenticated
+with check (id = (select auth.uid()) and role = 'user');
+
+create policy "profiles_update_self" on public.profiles
 for update to authenticated
 using (id = (select auth.uid()))
-with check (
-  id = (select auth.uid())
-  and role = (select role from public.profiles p where p.id = (select auth.uid()))
-);
+with check (id = (select auth.uid()));
 
 create policy "posts_read_approved_or_owner_or_staff" on public.posts
 for select to authenticated
@@ -204,16 +216,16 @@ with check (
   and downloads_enabled = false
 );
 
-create policy "posts_update_owner_or_staff" on public.posts
+-- Ordinary users may edit descriptive fields only while their submission is pending/rejected.
+create policy "posts_update_own_unmoderated" on public.posts
 for update to authenticated
-using (
-  user_id = (select auth.uid())
-  or (select private.has_role(array['admin','owner']::public.app_role[]))
-)
-with check (
-  user_id = (select auth.uid())
-  or (select private.has_role(array['admin','owner']::public.app_role[]))
-);
+using (user_id = (select auth.uid()) and status in ('pending', 'rejected'))
+with check (user_id = (select auth.uid()) and status in ('pending', 'rejected'));
+
+create policy "posts_update_staff" on public.posts
+for update to authenticated
+using ((select private.has_role(array['admin','owner']::public.app_role[])))
+with check ((select private.has_role(array['admin','owner']::public.app_role[])));
 
 create policy "likes_read_visible_posts" on public.post_likes
 for select to authenticated
@@ -265,6 +277,4 @@ create policy "platform_events_read_staff" on public.platform_events
 for select to authenticated
 using ((select private.has_role(array['admin','owner']::public.app_role[])));
 
--- Do not grant users direct role changes. Role management must use a trusted
--- server-side owner-only function/API, added in the application integration step.
-revoke update (role) on public.profiles from authenticated, anon;
+-- Role changes must only be made by trusted server-side owner-authorized code.
