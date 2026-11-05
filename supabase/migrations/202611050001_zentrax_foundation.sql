@@ -173,14 +173,13 @@ alter table public.platform_events enable row level security;
 
 -- Explicit grants: clients may only update safe profile/content columns.
 grant select on public.profiles to authenticated;
-grant insert (id, username, display_name) on public.profiles to authenticated;
 grant update (username, display_name) on public.profiles to authenticated;
 revoke update (role, id, created_at, updated_at) on public.profiles from anon, authenticated;
 
 grant select on public.posts to authenticated;
 grant insert (user_id, title, description, category, media_kind, media_url, thumbnail_url, rights_confirmed) on public.posts to authenticated;
 grant update (title, description, category, media_kind, media_url, thumbnail_url, rights_confirmed) on public.posts to authenticated;
-grant update on public.posts to authenticated;
+grant update (status, downloads_enabled) on public.posts to authenticated;
 
 grant select, insert, delete on public.post_likes to authenticated;
 grant select, insert on public.post_events to authenticated;
