@@ -171,6 +171,9 @@ alter table public.post_likes enable row level security;
 alter table public.post_events enable row level security;
 alter table public.platform_events enable row level security;
 
+-- Reset table privileges first; then grant only the operations required by RLS.
+revoke all on public.profiles, public.posts, public.post_likes, public.post_events, public.platform_events from anon, authenticated;
+
 -- Explicit grants: clients may only update safe profile/content columns.
 grant select on public.profiles to authenticated;
 grant update (username, display_name) on public.profiles to authenticated;
