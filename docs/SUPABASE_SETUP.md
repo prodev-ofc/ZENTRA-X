@@ -1,26 +1,30 @@
 # ZENTRAX Supabase setup
 
-This repository contains the initial database foundation. It is not connected to the live app until the migration is applied and the frontend environment variables are configured.
+This is the database foundation for the selected Supabase project:
+
+`https://mbcqnhxgzvesvfqffbti.supabase.co`
+
+It is not connected to the live app until the migration is applied and the frontend environment variables are configured.
 
 ## 1. Apply the database migration
 
-1. Open the ZENTRAX project in Supabase.
+1. Open the selected ZENTRAX project in Supabase.
 2. Open **SQL Editor** and create a new query.
 3. Copy the complete contents of `supabase/migrations/202611050001_zentrax_foundation.sql` from this repository.
-4. Run it once. It creates profiles, content submissions, likes, analytics events, role helpers, and Row Level Security policies.
+4. Run it once. Do not run it repeatedly; the migration creates PostgreSQL enum types and triggers.
 
-## 2. Add the initial Owner email allowlist
+## 2. Add the two initial Owners
 
-In the Supabase SQL Editor, run this separately, replacing the example values with the two owner email addresses supplied by the project owner:
+After the migration succeeds, run this separately in Supabase SQL Editor:
 
 ```sql
 insert into private.owner_allowlist (email)
 values
-  (lower('first-owner@example.com')),
-  (lower('second-owner@example.com'))
+  ('alextheon101@gmail.com'),
+  ('a.beeygutsa@gmail.com')
 on conflict (email) do nothing;
 
--- If either owner already registered and verified before the allowlist was added:
+-- Promote either account if it was already registered and email-verified.
 update public.profiles p
 set role = 'owner'
 from auth.users u
@@ -31,19 +35,21 @@ where u.id = p.id
   );
 ```
 
-The allowlist is stored in a non-exposed schema. Do not add owner emails to browser code or editable user metadata. The migration promotes allowlisted accounts only after email verification.
+The allowlist is stored in a non-exposed schema. Owner status is tied to verified email addresses, not editable signup metadata.
 
-## 3. Frontend environment variables
+## 3. Configure environment variables
 
-Set these in Vercel **Project → Settings → Environment Variables**, and in a local `.env` file for development:
+Set these in Vercel **Project → Settings → Environment Variables**, and in your local `.env` file:
 
-- `SUPABASE_URL` = your project URL
-- `SUPABASE_ANON_KEY` = the project's publishable key (or legacy anon key)
+- `SUPABASE_URL=https://mbcqnhxgzvesvfqffbti.supabase.co`
+- `SUPABASE_ANON_KEY=` the publishable key supplied for this project
 
-Only use the publishable/anon key in browser code. Never expose the database password or service-role/secret key in frontend code, Git, or public build variables.
+The publishable key is designed for browser use when Row Level Security is correctly enabled. Never put a database password or service-role/secret key in frontend code, GitHub, or a public build variable.
 
-## 4. Important next integration work
+## 4. Important implementation notes
 
-The migration is the database foundation, not the finished app integration. The next application changes must add Supabase Auth screens, username registration, session handling, content moderation UI, secure role-management endpoints, and dashboards. Media uploads need a private storage bucket and signed uploads; do not store large video files on Vercel's local filesystem.
+This migration creates the database foundation, not the completed app integration. The application still needs Supabase Auth screens, session handling, moderation UI, owner-only admin management, and analytics dashboards.
 
-Role promotion and admin management must be performed by trusted server-side code. Do not allow users to update their own `role`.
+Users can edit only safe descriptive fields on their own unmoderated posts. Only trusted staff-authorized code should change moderation status or download permissions. The current client-side event insert policies are a basic foundation; production analytics should be recorded through trusted server/edge functions to reduce event spoofing.
+
+Media uploads need cloud object storage and signed uploads. Do not store large video files on Vercel's local filesystem.
