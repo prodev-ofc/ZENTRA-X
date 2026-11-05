@@ -130,6 +130,29 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Email confirmation happens after signup when confirmation is enabled.
+-- Promote allowlisted owners at confirmation time, never from editable user metadata.
+create or replace function public.promote_allowlisted_owner()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+begin
+  if new.email_confirmed_at is not null and exists (
+    select 1 from private.owner_allowlist a where a.email = lower(coalesce(new.email, ''))
+  ) then
+    update public.profiles set role = 'owner'::public.app_role where id = new.id;
+  end if;
+  return new;
+end;
+$;
+
+drop trigger if exists on_auth_user_confirmed_owner on auth.users;
+create trigger on_auth_user_confirmed_owner
+  after update of email_confirmed_at, email on auth.users
+  for each row execute procedure public.promote_allowlisted_owner();
+
 create or replace function public.refresh_updated_at()
 returns trigger
 language plpgsql
